@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoBoard — Academic Feedback Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f0e17;--paper:#faf9f5;--cream:#f3efe4;--amber:#e8a030;--amber-light:#fdf1d8;--amber-dark:#c47f1a;--teal:#1a7a6e;--teal-light:#d0eeeb;--teal-mid:#2a9d8f;--red:#e05a3a;--red-light:#fdeee9;--muted:#8a8578;--border:#ddd9ce;--shadow:rgba(15,14,23,0.08);--shadow-md:rgba(15,14,23,0.14)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.6}
+.auth-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:1rem;background:var(--ink)}
+.auth-screen.hidden{display:none}
+.auth-box{width:100%;max-width:420px;animation:fadeUp .4s ease}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--paper);letter-spacing:-.02em;margin-bottom:.3rem}
+.auth-logo span{color:var(--amber)}
+.auth-tagline{font-size:.82rem;color:var(--muted);margin-bottom:2rem;font-family:'DM Mono',monospace;letter-spacing:.05em}
+.auth-card{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:2rem;backdrop-filter:blur(10px)}
+.auth-tabs{display:flex;gap:0;margin-bottom:1.8rem;border-bottom:1.5px solid rgba(255,255,255,.1)}
+.auth-tab{flex:1;padding:.7rem;text-align:center;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none}
+.auth-tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+.auth-form{display:none}
+.auth-form.active{display:block}
+.auth-label{display:block;font-size:.78rem;font-weight:500;color:rgba(250,249,245,.7);margin-bottom:.35rem}
+.auth-input{width:100%;padding:.7rem 1rem;border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--paper);background:rgba(255,255,255,.05);margin-bottom:1rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.auth-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,160,48,.15)}
+.auth-input::placeholder{color:rgba(255,255,255,.2)}
+.auth-btn{width:100%;padding:.8rem;border-radius:8px;border:none;background:var(--amber);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:.3rem}
+.auth-btn:hover{background:var(--amber-dark);transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,160,48,.4)}
+.auth-error{background:rgba(224,90,58,.15);border:1px solid rgba(224,90,58,.3);border-radius:8px;padding:.7rem 1rem;font-size:.8rem;color:#ff8a70;margin-bottom:1rem;display:none}
+.auth-error.show{display:block}
+.admin-hint{text-align:center;margin-top:1.2rem;font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace}
+.admin-hint span{color:var(--amber);cursor:pointer}
+.topbar{position:sticky;top:0;z-index:100;background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:58px;border-bottom:3px solid var(--amber)}
+.logo{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--paper);letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem}
+.logo span{color:var(--amber)}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.user-pill{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:.3rem .8rem .3rem .4rem}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--ink)}
+.user-name{font-size:.78rem;color:var(--paper);font-weight:500}
+.user-role{font-size:.65rem;font-family:'DM Mono',monospace;color:var(--amber);letter-spacing:.06em;text-transform:uppercase}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.15);border-radius:6px;color:var(--muted);font-size:.75rem;padding:.3rem .7rem;cursor:pointer;font-family:'DM Mono',monospace;transition:all .2s}
+.logout-btn:hover{color:var(--red);border-color:var(--red)}
+.nav-tabs{display:flex}
+.nav-tab{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 1.2rem;height:58px;display:flex;align-items:center;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;transition:color .2s,border-color .2s;background:none;border-top:none;border-left:none;border-right:none}
+.nav-tab:hover{color:var(--paper)}
+.nav-tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+.app{display:none}
+.app.active{display:block}
+.view{display:none;animation:fadeUp .35s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hero{background:var(--ink);padding:3.5rem 2rem 3rem;position:relative;overflow:hidden}
+.hero::after{content:'ECHOBOARD';position:absolute;right:-1rem;top:50%;transform:translateY(-50%);font-family:'DM Serif Display',serif;font-size:8rem;color:rgba(255,255,255,.03);pointer-events:none;line-height:1}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4vw,3.2rem);color:var(--paper);line-height:1.15;max-width:600px}
+.hero h1 em{color:var(--amber);font-style:italic}
+.hero p{color:var(--muted);margin-top:.8rem;font-size:.95rem;max-width:480px}
+.hero-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(232,160,48,.15);border:1px solid rgba(232,160,48,.3);border-radius:999px;padding:.3rem .8rem;font-size:.72rem;font-family:'DM Mono',monospace;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1rem}
+.container{max-width:1100px;margin:0 auto;padding:2.5rem 2rem}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+@media(max-width:768px){.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}.nav-tabs{display:none}}
+@media(max-width:480px){.three-col{grid-template-columns:1fr}}
+.card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:1.8rem;box-shadow:0 2px 12px var(--shadow);transition:box-shadow .2s}
+.card:hover{box-shadow:0 6px 24px var(--shadow-md)}
+.card-title{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--ink);margin-bottom:.5rem}
+.card-meta{font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.04em;margin-bottom:1.2rem}
+.section-label{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+label{display:block;font-size:.8rem;font-weight:500;color:var(--ink);margin-bottom:.35rem}
+input,select,textarea{width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--ink);background:var(--paper);transition:border-color .2s,box-shadow .2s;margin-bottom:1.1rem;outline:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--teal-mid);box-shadow:0 0 0 3px var(--teal-light);background:#fff}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+select{cursor:pointer}
+.star-group{display:flex;gap:.35rem;margin-bottom:1.1rem;flex-direction:row-reverse;justify-content:flex-end}
+.star-group input[type=radio]{display:none}
+.star-group label{font-size:1.6rem;cursor:pointer;color:var(--border);transition:color .15s,transform .15s;margin-bottom:0}
+.star-group input[type=radio]:checked~label,.star-group label:hover,.star-group label:hover~label{color:var(--amber);transform:scale(1.15)}
+.tag-group{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem}
+.tag-check{display:none}
+.tag-label{font-size:.78rem;padding:.35rem .8rem;border-radius:999px;border:1.5px solid var(--border);cursor:pointer;background:var(--paper);color:var(--muted);transition:all .15s;font-weight:500;margin-bottom:0}
+.tag-check:checked+.tag-label{background:var(--ink);color:var(--amber);border-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1.6rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:transform .15s,box-shadow .15s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--ink);color:var(--amber)}
+.btn-primary:hover{background:#1e1d2a}
+.btn-amber{background:var(--amber);color:var(--ink)}
+.btn-amber:hover{background:var(--amber-dark)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#c04830}
+.btn-ghost{background:none;color:var(--ink);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--cream)}
+.btn-sm{padding:.45rem 1rem;font-size:.8rem}
+.btn-full{width:100%}
+.stat-tile{background:var(--cream);border:1.5px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem}
+.stat-value{font-family:'DM Serif Display',serif;font-size:2.4rem;color:var(--ink);line-height:1}
+.stat-label{font-size:.75rem;color:var(--muted);margin-top:.3rem;font-family:'DM Mono',monospace;letter-spacing:.05em;text-transform:uppercase}
+.badge{display:inline-flex;align-items:center;padding:.25rem .7rem;border-radius:999px;font-size:.72rem;font-weight:600;letter-spacing:.04em;font-family:'DM Mono',monospace}
+.badge-amber{background:var(--amber-light);color:var(--amber-dark)}
+.badge-teal{background:var(--teal-light);color:var(--teal)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-muted{background:var(--cream);color:var(--muted)}
+.progress-row{margin-bottom:.9rem}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem}
+.progress-text{font-size:.82rem;color:var(--ink);font-weight:500}
+.progress-pct{font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace}
+.progress-bar{height:8px;border-radius:999px;background:var(--cream);overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;background:var(--teal-mid);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.progress-fill.amber{background:var(--amber)}
+.progress-fill.red{background:var(--red)}
+.feedback-item{border:1.5px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;background:#fff;margin-bottom:1rem;transition:box-shadow .2s;position:relative}
+.feedback-item:hover{box-shadow:0 4px 16px var(--shadow)}
+.feedback-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px;background:var(--teal-mid)}
+.feedback-item.low::before{background:var(--red)}
+.feedback-item.mid::before{background:var(--amber)}
+.fi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem}
+.fi-name{font-weight:600;font-size:.9rem}
+.fi-event{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.fi-stars{color:var(--amber);font-size:.85rem;letter-spacing:.05em}
+.fi-comment{font-size:.87rem;color:#333;line-height:1.55;margin-bottom:.6rem}
+.fi-tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.fi-actions{display:flex;gap:.5rem;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border)}
+.suggestion-chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--amber-light);border:1px solid rgba(232,160,48,.3);border-radius:8px;padding:.5rem .8rem;font-size:.82rem;font-weight:500;margin-bottom:.5rem;margin-right:.5rem}
+.chip-count{background:var(--amber);color:var(--ink);font-family:'DM Mono',monospace;font-size:.68rem;font-weight:700;border-radius:999px;padding:.1rem .45rem}
+.ai-box{background:linear-gradient(135deg,#0f0e17 0%,#1a1930 100%);border-radius:12px;padding:1.6rem;color:var(--paper);position:relative;overflow:hidden}
+.ai-box::before{content:'✦';position:absolute;right:1.5rem;top:1rem;font-size:3rem;color:rgba(232,160,48,.2)}
+.ai-box-label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.ai-box-label::before{content:'●';font-size:.5rem;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ai-box p{font-size:.88rem;line-height:1.65;color:rgba(250,249,245,.8)}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--teal);color:#fff;padding:.9rem 1.4rem;border-radius:10px;font-size:.88rem;font-weight:500;box-shadow:0 8px 32px rgba(26,122,110,.4);z-index:9998;transform:translateY(100px);opacity:0;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;display:flex;align-items:center;gap:.6rem}
+.toast.show{transform:translateY(0);opacity:1}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,14,23,.5);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:2.2rem;width:100%;max-width:560px;box-shadow:0 24px 80px rgba(15,14,23,.3);animation:fadeUp .3s ease;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem}
+.modal-title{font-family:'DM Serif Display',serif;font-size:1.4rem}
+.modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);line-height:1;padding:0}
+.divider{border:none;border-top:1.5px solid var(--border);margin:1.5rem 0}
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:.8rem}
+.report-preview{background:var(--cream);border:1.5px dashed var(--border);border-radius:10px;padding:1.5rem;font-family:'DM Mono',monospace;font-size:.78rem;line-height:1.8;color:var(--ink);white-space:pre-wrap;word-break:break-word;max-height:500px;overflow-y:auto}
+.my-fb-card{border:1.5px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;background:#fff;margin-bottom:1rem;position:relative}
+.my-fb-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px;background:var(--teal-mid)}
+
+/* Event Management */
+.event-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;transition:box-shadow .2s}
+.event-card:hover{box-shadow:0 4px 16px var(--shadow)}
+.event-card-info{flex:1}
+.event-card-name{font-weight:600;font-size:.92rem;color:var(--ink)}
+.event-card-date{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.2rem}
+.event-card-meta{font-size:.75rem;color:var(--teal);margin-top:.2rem}
+.add-event-box{background:var(--cream);border:1.5px dashed var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+@media(max-width:600px){.input-row{grid-template-columns:1fr}}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--paper)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">✦ Echo<span>Board</span></div>
+    <div class="auth-tagline">// academic feedback platform</div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <div class="auth-form active" id="form-login">
+        <div class="auth-error" id="login-error"></div>
+        <label class="auth-label">Email</label>
+        <input class="auth-input" type="email" id="login-email" placeholder="tumhara@email.com">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" type="password" id="login-password" placeholder="••••••••">
+        <button class="auth-btn" onclick="doLogin()">Login →</button>
+      </div>
+      <div class="auth-form" id="form-register">
+        <div class="auth-error" id="register-error"></div>
+        <label class="auth-label">Full Name</label>
+        <input class="auth-input" type="text" id="reg-name" placeholder="Arjun Mehta">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" type="email" id="reg-email" placeholder="arjun@college.edu">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" type="password" id="reg-password" placeholder="min 6 characters">
+        <button class="auth-btn" onclick="doRegister()">Create Account →</button>
+      </div>
+    </div>
+    <div class="admin-hint">Organizer? <span onclick="showToastPublic('Use your admin credentials from .env','amber')">Use admin credentials</span></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app">
+  <header class="topbar">
+    <div class="logo">✦ Echo<span>Board</span></div>
+    <nav class="nav-tabs" id="nav-tabs"></nav>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div>
+          <div class="user-name" id="user-name-display">User</div>
+          <div class="user-role" id="user-role-display">participant</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- SUBMIT FEEDBACK (Participant) -->
+  <div class="view" id="view-submit">
+    <div class="hero">
+      <div class="hero-badge">✦ Participant</div>
+      <h1>Your feedback<br>shapes <em>better events.</em></h1>
+      <p>Take 2 minutes to help organizers understand what worked and what to improve.</p>
+    </div>
+    <div class="container">
+      <div class="two-col">
+        <div class="card">
+          <div class="section-label">Submit Feedback</div>
+          <label>Select Event / Workshop</label>
+          <select id="f-event"><option value="">Loading events...</option></select>
+          <label>Overall Rating</label>
+          <div class="star-group">
+            <input type="radio" id="s5" name="rating" value="5"><label for="s5">★</label>
+            <input type="radio" id="s4" name="rating" value="4"><label for="s4">★</label>
+            <input type="radio" id="s3" name="rating" value="3"><label for="s3">★</label>
+            <input type="radio" id="s2" name="rating" value="2"><label for="s2">★</label>
+            <input type="radio" id="s1" name="rating" value="1"><label for="s1">★</label>
+          </div>
+          <label>What did you enjoy most?</label>
+          <textarea id="f-enjoy" placeholder="The hands-on sessions were fantastic..."></textarea>
+          <label>What could be improved?</label>
+          <textarea id="f-improve" placeholder="More networking time would be helpful..."></textarea>
+          <label>Tag relevant areas</label>
+          <div class="tag-group">
+            <input type="checkbox" class="tag-check" id="t1" value="Content Quality"><label class="tag-label" for="t1">Content Quality</label>
+            <input type="checkbox" class="tag-check" id="t2" value="Speaker/Presenter"><label class="tag-label" for="t2">Speaker/Presenter</label>
+            <input type="checkbox" class="tag-check" id="t3" value="Venue &amp; Logistics"><label class="tag-label" for="t3">Venue &amp; Logistics</label>
+            <input type="checkbox" class="tag-check" id="t4" value="Networking"><label class="tag-label" for="t4">Networking</label>
+            <input type="checkbox" class="tag-check" id="t5" value="Time Management"><label class="tag-label" for="t5">Time Management</label>
+            <input type="checkbox" class="tag-check" id="t6" value="Hands-on Sessions"><label class="tag-label" for="t6">Hands-on Sessions</label>
+            <input type="checkbox" class="tag-check" id="t7" value="Online Access"><label class="tag-label" for="t7">Online Access</label>
+          </div>
+          <label>Would you recommend this event?</label>
+          <select id="f-recommend" style="margin-bottom:1.3rem">
+            <option value="">Select</option>
+            <option value="Definitely">Definitely</option>
+            <option value="Probably">Probably</option>
+            <option value="Not Sure">Not Sure</option>
+            <option value="Probably Not">Probably Not</option>
+          </select>
+          <button class="btn btn-primary btn-full" onclick="submitFeedback()">✦ Submit Feedback</button>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:1.5rem">
+            <div class="card-title">Why your feedback matters</div>
+            <div class="card-meta">HOW WE USE IT</div>
+            <p style="font-size:.87rem;line-height:1.65;color:#444">Every submission is anonymously analyzed. Organizers review aggregated reports to improve future events.</p>
+          </div>
+          <div class="card">
+            <div class="section-label">My Event Activity</div>
+            <div id="recent-events-list"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY FEEDBACK (Participant) -->
+  <div class="view" id="view-myfeedback">
+    <div class="hero">
+      <div class="hero-badge">✎ My Submissions</div>
+      <h1>Your <em>Feedback History</em></h1>
+      <p>All feedback you have submitted across events.</p>
+    </div>
+    <div class="container"><div id="my-feedback-list"></div></div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="view" id="view-dashboard">
+    <div class="hero">
+      <div class="hero-badge">🔒 Admin</div>
+      <h1>Analytics <em>Dashboard</em></h1>
+      <p>Aggregated insights across all events and participants.</p>
+    </div>
+    <div class="container">
+      <div class="three-col" id="stat-tiles" style="margin-bottom:2rem"></div>
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:1.5rem"><div class="section-label">Rating Distribution</div><div id="rating-dist"></div></div>
+          <div class="card"><div class="section-label">Top Suggestions (Most Mentioned)</div><div id="top-suggestions"></div></div>
+        </div>
+        <div>
+          <div class="ai-box" style="margin-bottom:1.5rem"><div class="ai-box-label">✦ AI Summary</div><p id="ai-summary-text">Loading...</p></div>
+          <div class="card"><div class="section-label">Tag Frequency</div><div id="tag-freq"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN: MANAGE EVENTS -->
+  <div class="view" id="view-events">
+    <div class="hero">
+      <div class="hero-badge">🔒 Admin</div>
+      <h1>Manage <em>Events</em></h1>
+      <p>Add, view and remove academic events. Participants will see these in their feedback form.</p>
+    </div>
+    <div class="container">
+      <div class="two-col">
+        <!-- Add Event Form -->
+        <div class="card">
+          <div class="section-label">Add New Event</div>
+          <label>Event Name</label>
+          <input type="text" id="new-event-name" placeholder="e.g. ML Workshop 2025">
+          <label>Date</label>
+          <input type="date" id="new-event-date">
+          <label>Description (optional)</label>
+          <textarea id="new-event-desc" placeholder="Brief description of the event..." style="min-height:70px"></textarea>
+          <label>Category</label>
+          <select id="new-event-category">
+            <option value="Workshop">Workshop</option>
+            <option value="Symposium">Symposium</option>
+            <option value="Bootcamp">Bootcamp</option>
+            <option value="Fair">Fair</option>
+            <option value="Summit">Summit</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Conference">Conference</option>
+            <option value="Other">Other</option>
+          </select>
+          <button class="btn btn-amber btn-full" onclick="addEvent()">✦ Add Event</button>
+        </div>
+        <!-- Events List -->
+        <div>
+          <div class="section-label">All Events</div>
+          <div id="events-list"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN HISTORY -->
+  <div class="view" id="view-history">
+    <div class="hero">
+      <div class="hero-badge">🔒 Admin</div>
+      <h1>All Feedback <em>History</em></h1>
+      <p>Browse, filter and manage all participant submissions.</p>
+    </div>
+    <div class="container">
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+        <div style="flex:1;min-width:200px"><input type="text" id="search-input" placeholder="Search feedback..." style="margin:0" oninput="loadAndRenderHistory()"></div>
+        <select id="filter-event" onchange="loadAndRenderHistory()" style="margin:0;width:auto;min-width:180px"><option value="">All Events</option></select>
+        <select id="filter-rating" onchange="loadAndRenderHistory()" style="margin:0;width:auto">
+          <option value="">All Ratings</option>
+          <option value="5">5 Stars</option><option value="4">4 Stars</option>
+          <option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option>
+        </select>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN REPORTS -->
+  <div class="view" id="view-reports">
+    <div class="hero">
+      <div class="hero-badge">🔒 Admin</div>
+      <h1>Generate <em>Reports</em></h1>
+      <p>Export structured feedback reports for any event.</p>
+    </div>
+    <div class="container">
+      <div class="two-col">
+        <div class="card">
+          <div class="section-label">Report Builder</div>
+          <label>Select Event</label>
+          <select id="report-event"><option value="">All Events</option></select>
+          <label>Date Range</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+            <input type="date" id="report-from"><input type="date" id="report-to">
+          </div>
+          <label>Include Sections</label>
+          <div class="tag-group">
+            <input type="checkbox" class="tag-check" id="r1" value="summary" checked><label class="tag-label" for="r1">Summary</label>
+            <input type="checkbox" class="tag-check" id="r2" value="ratings" checked><label class="tag-label" for="r2">Ratings</label>
+            <input type="checkbox" class="tag-check" id="r3" value="suggestions" checked><label class="tag-label" for="r3">Suggestions</label>
+            <input type="checkbox" class="tag-check" id="r4" value="comments"><label class="tag-label" for="r4">Comments</label>
+            <input type="checkbox" class="tag-check" id="r5" value="tags"><label class="tag-label" for="r5">Tag Analysis</label>
+          </div>
+          <button class="btn btn-amber btn-full" onclick="generateReport()">Generate Report</button>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div class="card-title">Report Preview</div>
+            <button class="btn btn-ghost btn-sm" onclick="copyReport()">Copy</button>
+          </div>
+          <div class="report-preview" id="report-output">Select options and click Generate Report.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Feedback Detail</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// const API = '/api';
+const API = 'http://localhost:3001/api';
+let currentUser = null;
+
+// ── Events stored in localStorage (admin manages) ──
+const EVENTS_KEY = 'eb_events';
+
+function getStoredEvents() {
+  try {
+    const raw = localStorage.getItem(EVENTS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  // Default events
+  return [
+    { id: '1', name: 'ML Workshop 2025', date: '2025-03-15', category: 'Workshop', desc: 'Hands-on machine learning workshop' },
+    { id: '2', name: 'Research Symposium', date: '2025-04-10', category: 'Symposium', desc: 'Annual research presentations' },
+    { id: '3', name: 'Career Connect Fair', date: '2025-04-20', category: 'Fair', desc: 'Campus career fair' },
+    { id: '4', name: 'Data Science Bootcamp', date: '2025-05-01', category: 'Bootcamp', desc: 'Intensive data science training' },
+    { id: '5', name: 'Open Science Summit', date: '2025-05-15', category: 'Summit', desc: 'Open science discussions' },
+  ];
+}
+
+function saveEvents(events) {
+  localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+}
+
+const getToken = () => localStorage.getItem('eb_token');
+const getUser  = () => JSON.parse(localStorage.getItem('eb_user') || 'null');
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
+}
+
+async function apiFetch(path, options = {}) {
+  const res  = await fetch(API + path, { headers: authHeaders(), ...options });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('form-login').classList.toggle('active', tab==='login');
+  document.getElementById('form-register').classList.toggle('active', tab==='register');
+}
+
+function showAuthError(formId, msg) {
+  const el = document.getElementById(formId+'-error');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthError('login','Please enter email and password'); return; }
+  try {
+    const data = await apiFetch('/auth/login', { method:'POST', body: JSON.stringify({email, password}) });
+    saveSession(data); bootApp();
+  } catch(err) { showAuthError('login', err.message); }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!name||!email||!password) { showAuthError('register','Please fill all fields'); return; }
+  if (password.length < 6) { showAuthError('register','Password must be at least 6 characters'); return; }
+  try {
+    const data = await apiFetch('/auth/register', { method:'POST', body: JSON.stringify({name,email,password}) });
+    saveSession(data); bootApp();
+  } catch(err) { showAuthError('register', err.message); }
+}
+
+function saveSession(data) {
+  localStorage.setItem('eb_token', data.token);
+  localStorage.setItem('eb_user', JSON.stringify(data.user));
+  currentUser = data.user;
+}
+
+function doLogout() {
+  localStorage.removeItem('eb_token'); localStorage.removeItem('eb_user');
+  currentUser = null;
+  document.getElementById('main-app').classList.remove('active');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+function bootApp() {
+  currentUser = getUser();
+  if (!currentUser || !getToken()) return;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.add('active');
+  document.getElementById('user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+  document.getElementById('user-name-display').textContent = currentUser.name;
+  document.getElementById('user-role-display').textContent = currentUser.role;
+  buildNav(currentUser.role);
+  if (currentUser.role === 'admin') switchView('dashboard');
+  else { switchView('submit'); }
+}
+
+function buildNav(role) {
+  const nav = document.getElementById('nav-tabs');
+  if (role === 'admin') {
+    nav.innerHTML = `
+      <button class="nav-tab" onclick="switchView('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="switchView('events')">Manage Events</button>
+      <button class="nav-tab" onclick="switchView('history')">All Feedback</button>
+      <button class="nav-tab" onclick="switchView('reports')">Reports</button>`;
+  } else {
+    nav.innerHTML = `
+      <button class="nav-tab" onclick="switchView('submit')">Submit Feedback</button>
+      <button class="nav-tab" onclick="switchView('myfeedback')">My Feedback</button>`;
+  }
+}
+
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const view = document.getElementById('view-'+name);
+  if (view) view.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.onclick && t.onclick.toString().includes("'"+name+"'")) t.classList.add('active');
+  });
+  if (name==='dashboard') loadAndRenderDashboard();
+  if (name==='history') loadAndRenderHistory();
+  if (name==='reports') loadAndPopulateReports();
+  if (name==='myfeedback') loadMyFeedback();
+  if (name==='submit') loadEventDropdown('f-event');
+  if (name==='events') renderEventsList();
+}
+
+// ── EVENT MANAGEMENT (Admin) ──
+function addEvent() {
+  const name = document.getElementById('new-event-name').value.trim();
+  const date = document.getElementById('new-event-date').value;
+  const desc = document.getElementById('new-event-desc').value.trim();
+  const category = document.getElementById('new-event-category').value;
+  if (!name) { showToast('Please enter event name', 'red'); return; }
+  if (!date) { showToast('Please select a date', 'red'); return; }
+  const events = getStoredEvents();
+  // Check duplicate
+  if (events.find(e => e.name.toLowerCase() === name.toLowerCase())) {
+    showToast('This event already exists', 'red'); return;
+  }
+  const newEvent = { id: Date.now().toString(), name, date, desc, category };
+  events.push(newEvent);
+  saveEvents(events);
+  document.getElementById('new-event-name').value = '';
+  document.getElementById('new-event-date').value = '';
+  document.getElementById('new-event-desc').value = '';
+  showToast('Event added successfully! ✦', 'teal');
+  renderEventsList();
+}
+
+function deleteEvent(id) {
+  if (!confirm('Are you sure you want to delete this event?')) return;
+  const events = getStoredEvents().filter(e => e.id !== id);
+  saveEvents(events);
+  showToast('Event deleted!', 'red');
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const el = document.getElementById('events-list');
+  if (!el) return;
+  const events = getStoredEvents();
+  if (!events.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>No events yet. Add your first event!</p></div>';
+    return;
+  }
+  // Sort by date descending
+  const sorted = [...events].sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = sorted.map(ev => `
+    <div class="event-card">
+      <div class="event-card-info">
+        <div class="event-card-name">${ev.name}</div>
+        <div class="event-card-date">${new Date(ev.date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})} &middot; <span class="badge badge-teal" style="font-size:.65rem;padding:.15rem .5rem">${ev.category}</span></div>
+        ${ev.desc ? `<div class="event-card-meta">${ev.desc}</div>` : ''}
+      </div>
+      <button class="btn btn-red btn-sm" onclick="deleteEvent('${ev.id}')">Delete</button>
+    </div>
+  `).join('');
+}
+
+function loadEventDropdown(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const events = getStoredEvents();
+  const sorted = [...events].sort((a,b) => new Date(b.date) - new Date(a.date));
+  sel.innerHTML = '<option value="">Choose an event</option>' +
+    sorted.map(e => `<option value="${e.name}">${e.name} (${new Date(e.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})})</option>`).join('');
+}
+
+// ── FEEDBACK SUBMIT ──
+async function submitFeedback() {
+  const event = document.getElementById('f-event').value;
+  const rating = document.querySelector('input[name="rating"]:checked')?.value;
+  const enjoy = document.getElementById('f-enjoy').value.trim();
+  const improve = document.getElementById('f-improve').value.trim();
+  if (!event) { showToast('Please select an event','red'); return; }
+  if (!rating) { showToast('Please give a rating','red'); return; }
+  if (!enjoy && !improve) { showToast('Please write at least one comment','red'); return; }
+  const tags = [...document.querySelectorAll('.tag-check:checked')].map(c=>c.value);
+  const recommend = document.getElementById('f-recommend').value;
+  showToast('Submitting...','teal');
+  try {
+    await apiFetch('/feedback', { method:'POST', body: JSON.stringify({event, rating:parseInt(rating), enjoy, improve, tags, recommend}) });
+    document.getElementById('f-event').value=''; document.getElementById('f-enjoy').value='';
+    document.getElementById('f-improve').value=''; document.getElementById('f-recommend').value='';
+    document.querySelectorAll('input[name="rating"]').forEach(r=>r.checked=false);
+    document.querySelectorAll('.tag-check').forEach(c=>c.checked=false);
+    showToast('Feedback submitted! ✦','teal');
+    loadRecentEvents();
+  } catch(err) { showToast(err.message,'red'); }
+}
+
+async function loadRecentEvents() {
+  const el = document.getElementById('recent-events-list');
+  if (!el) return;
+  try {
+    const data = await apiFetch('/feedback/mine');
+    const events = [...new Set(data.map(f=>f.event))];
+    if (!events.length) { el.innerHTML='<p style="color:var(--muted);font-size:.85rem">No feedback submitted yet.</p>'; return; }
+    el.innerHTML = events.map(e => {
+      const fb = data.filter(f=>f.event===e);
+      const avg = (fb.reduce((s,f)=>s+f.rating,0)/fb.length).toFixed(1);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border)"><div><div style="font-size:.85rem;font-weight:500">${e}</div><div style="font-size:.72rem;color:var(--muted)">${fb.length} submitted</div></div><span class="badge badge-amber">${avg}★</span></div>`;
+    }).join('');
+  } catch { el.innerHTML='<p style="color:var(--muted);font-size:.85rem">Could not load.</p>'; }
+}
+
+async function loadMyFeedback() {
+  const list = document.getElementById('my-feedback-list');
+  list.innerHTML='<p style="color:var(--muted)">Loading...</p>';
+  try {
+    const data = await apiFetch('/feedback/mine');
+    if (!data.length) { list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p> You havenot submitted any feedback yet.</p></div>'; return; }
+    list.innerHTML = data.map(f =>
+      `<div class="my-fb-card"><div class="fi-header"><div><div class="fi-name">${f.event}</div><div class="fi-event">${new Date(f.date).toLocaleDateString()}</div></div><div><div class="fi-stars">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</div>${f.recommend?`<span class="badge badge-muted">${f.recommend}</span>`:''}</div></div>${f.enjoy?`<div class="fi-comment">💚 ${f.enjoy}</div>`:''}${f.improve?`<div class="fi-comment" style="color:#666">💡 ${f.improve}</div>`:''}<div class="fi-tags">${f.tags.map(t=>`<span class="badge badge-teal">${t}</span>`).join('')}</div></div>`
+    ).join('');
+  } catch(err) { list.innerHTML=`<p style="color:var(--red)">${err.message}</p>`; }
+}
+
+// ── DASHBOARD ──
+async function loadAndRenderDashboard() {
+  document.getElementById('ai-summary-text').textContent='Analyzing feedback...';
+  try {
+    const d = await apiFetch('/feedback');
+    const avg = d.length?(d.reduce((s,f)=>s+f.rating,0)/d.length).toFixed(1):0;
+    const evs = [...new Set(d.map(f=>f.event))].length;
+    document.getElementById('stat-tiles').innerHTML =
+      `<div class="stat-tile"><div class="stat-value">${d.length}</div><div class="stat-label">Total Responses</div></div>`+
+      `<div class="stat-tile"><div class="stat-value">${avg}</div><div class="stat-label">Avg. Rating</div></div>`+
+      `<div class="stat-tile"><div class="stat-value">${evs}</div><div class="stat-label">Events Covered</div></div>`;
+    const counts=[5,4,3,2,1].map(r=>({r,c:d.filter(f=>f.rating===r).length}));
+    const maxC=Math.max(...counts.map(x=>x.c),1);
+    document.getElementById('rating-dist').innerHTML=counts.map(({r,c})=>
+      `<div class="progress-row"><div class="progress-header"><span class="progress-text">${'★'.repeat(r)} ${r} Star${r>1?'s':''}</span><span class="progress-pct">${c}</span></div><div class="progress-bar"><div class="progress-fill ${r<=2?'red':r==3?'amber':''}" style="width:${(c/maxC*100).toFixed(1)}%"></div></div></div>`
+    ).join('');
+    const sugg=extractSuggestions(d);
+    document.getElementById('top-suggestions').innerHTML=sugg.length?sugg.slice(0,8).map(s=>`<span class="suggestion-chip">${s.text}<span class="chip-count">${s.count}</span></span>`).join(''):'<p style="color:var(--muted);font-size:.85rem">No data yet.</p>';
+    const tagMap={};d.forEach(f=>f.tags.forEach(t=>{tagMap[t]=(tagMap[t]||0)+1}));
+    const sortedTags=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]);const maxT=sortedTags[0]?.[1]||1;
+    document.getElementById('tag-freq').innerHTML=sortedTags.map(([t,c])=>
+      `<div class="progress-row"><div class="progress-header"><span class="progress-text">${t}</span><span class="progress-pct">${c}</span></div><div class="progress-bar"><div class="progress-fill amber" style="width:${(c/maxT*100).toFixed(1)}%"></div></div></div>`
+    ).join('')||'<p style="color:var(--muted);font-size:.85rem">No tags yet.</p>';
+    generateAISummary(d);
+  } catch(err){showToast(err.message,'red');}
+}
+
+function extractSuggestions(data) {
+  const keywords=['networking','schedule','venue','speaker','content','online','time','breaks','material','resources','interactive','advanced','recording','slides','structure','communication','food','duration','hands-on','practice','examples'];
+  const map={};
+  data.forEach(f=>{
+    const text=((f.improve||'')+' '+(f.enjoy||'')).toLowerCase();
+    keywords.forEach(k=>{if(text.includes(k))map[k]=(map[k]||0)+1;});
+  });
+  return Object.entries(map).map(([text,count])=>({text,count})).sort((a,b)=>b.count-a.count);
+}
+
+function generateAISummary(data) {
+  if(!data.length){document.getElementById('ai-summary-text').textContent='No feedback yet.';return;}
+  const avg=(data.reduce((s,f)=>s+f.rating,0)/data.length).toFixed(1);
+  const hi=data.filter(f=>f.rating>=4).length;
+  const lo=data.filter(f=>f.rating<=2).length;
+  const pct=(hi/data.length*100).toFixed(0);
+  const sugg=extractSuggestions(data).slice(0,3).map(s=>s.text).join(', ');
+  const events=[...new Set(data.map(f=>f.event))].slice(0,3).join(', ');
+  const recommend=data.filter(f=>f.recommend==='Definitely'||f.recommend==='Probably').length;
+  const recPct=(recommend/data.length*100).toFixed(0);
+  document.getElementById('ai-summary-text').textContent=
+    `Across ${data.length} responses from events including ${events}, participants rated experiences an average of ${avg}/5. ${pct}% gave positive ratings (4–5 stars), while ${lo} response${lo!==1?'s':''} flagged concerns. ${recPct}% would recommend these events.\n\nCommonly mentioned improvement areas: ${sugg||'general logistics and content depth'}. Organizers should prioritize these topics for upcoming sessions.`;
+}
+
+async function loadAndRenderHistory() {
+  const search=document.getElementById('search-input')?.value.toLowerCase()||'';
+  const evFilter=document.getElementById('filter-event')?.value||'';
+  const rtFilter=document.getElementById('filter-rating')?.value||'';
+  const params={};if(evFilter)params.event=evFilter;if(rtFilter)params.rating=rtFilter;
+  const query=new URLSearchParams(params).toString();
+  try {
+    const data=await apiFetch('/feedback'+(query?'?'+query:''));
+    const events=[...new Set(data.map(f=>f.event))].sort();
+    const sel=document.getElementById('filter-event');const cur=sel.value;
+    sel.innerHTML='<option value="">All Events</option>'+events.map(e=>`<option value="${e}"${e===cur?' selected':''}>${e}</option>`).join('');
+    let filtered=data.filter(f=>{const text=[f.name,f.event,f.enjoy,f.improve,...f.tags].join(' ').toLowerCase();return !search||text.includes(search);});
+    const list=document.getElementById('history-list');
+    if(!filtered.length){list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>No feedback matches.</p></div>';return;}
+    list.innerHTML=filtered.map(f=>
+      `<div class="feedback-item ${f.rating<=2?'low':f.rating==3?'mid':''}">
+      <div class="fi-header"><div><div class="fi-name">${f.name}</div><div class="fi-event">${f.event} · ${new Date(f.date).toLocaleDateString()}</div></div>
+      <div style="text-align:right"><div class="fi-stars">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</div>${f.recommend?`<span class="badge badge-muted">${f.recommend}</span>`:''}</div></div>
+      ${f.enjoy?`<div class="fi-comment">💚 ${f.enjoy}</div>`:''}
+      ${f.improve?`<div class="fi-comment" style="color:#666">💡 ${f.improve}</div>`:''}
+      <div class="fi-tags">${f.tags.map(t=>`<span class="badge badge-teal">${t}</span>`).join('')}</div>
+      <div class="fi-actions"><button class="btn btn-ghost btn-sm" onclick="openDetail('${f._id}')">View</button><button class="btn btn-red btn-sm" onclick="deleteFeedback('${f._id}')">Delete</button></div></div>`
+    ).join('');
+  } catch(err){showToast(err.message,'red');}
+}
+
+async function deleteFeedback(id) {
+  if(!confirm('Are you sure you want to delete this?'))return;
+  try { await apiFetch('/feedback/'+id,{method:'DELETE'}); showToast('Deleted!','red'); loadAndRenderHistory(); }
+  catch(err){showToast(err.message,'red');}
+}
+
+async function openDetail(id) {
+  try {
+    const f=await apiFetch('/feedback/'+id);
+    document.getElementById('modal-title').textContent=f.event;
+    document.getElementById('modal-body').innerHTML=
+      `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><div style="font-weight:600">${f.name}</div><div style="font-size:.78rem;color:var(--muted)">${new Date(f.date).toLocaleDateString()}</div></div>
+      <div style="text-align:right"><div style="color:var(--amber);font-size:1.1rem">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</div>${f.recommend?`<span class="badge badge-muted">${f.recommend}</span>`:''}</div></div>
+      <hr class="divider">
+      ${f.enjoy?`<div style="margin-bottom:1rem"><div class="section-label">Enjoyed</div><p style="font-size:.88rem;line-height:1.6;color:#333">💚 ${f.enjoy}</p></div>`:''}
+      ${f.improve?`<div style="margin-bottom:1rem"><div class="section-label">Improvement</div><p style="font-size:.88rem;line-height:1.6;color:#333">💡 ${f.improve}</p></div>`:''}
+      ${f.tags.length?`<div><div class="section-label">Tags</div><div class="fi-tags">${f.tags.map(t=>`<span class="badge badge-teal">${t}</span>`).join('')}</div></div>`:''}`;
+    document.getElementById('detail-modal').classList.add('open');
+  } catch(err){showToast(err.message,'red');}
+}
+function closeModal(){document.getElementById('detail-modal').classList.remove('open');}
+document.getElementById('detail-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+async function loadAndPopulateReports() {
+  try {
+    const data=await apiFetch('/feedback');
+    const events=[...new Set(data.map(f=>f.event))].sort();
+    document.getElementById('report-event').innerHTML='<option value="">All Events</option>'+events.map(e=>`<option value="${e}">${e}</option>`).join('');
+    const today=new Date().toISOString().split('T')[0];
+    const t3=new Date();t3.setMonth(t3.getMonth()-3);
+    document.getElementById('report-from').value=t3.toISOString().split('T')[0];
+    document.getElementById('report-to').value=today;
+  } catch(err){showToast(err.message,'red');}
+}
+
+async function generateReport() {
+  const ev=document.getElementById('report-event').value;
+  const from=document.getElementById('report-from').value;
+  const to=document.getElementById('report-to').value;
+  const sections=[...document.querySelectorAll('[id^="r"]:checked')].map(c=>c.value);
+  try {
+    const query=ev?'?event='+encodeURIComponent(ev):'';
+    let data=await apiFetch('/feedback'+query);
+    if(from)data=data.filter(f=>new Date(f.date)>=new Date(from));
+    if(to)data=data.filter(f=>new Date(f.date)<=new Date(to+'T23:59:59'));
+    if(!data.length){document.getElementById('report-output').textContent='No feedback found for selected filters.';return;}
+    const avg=(data.reduce((s,f)=>s+f.rating,0)/data.length).toFixed(2);
+    const dist=[5,4,3,2,1].map(r=>'  '+r+' star: '+data.filter(f=>f.rating===r).length).join('\n');
+    const sugg=extractSuggestions(data).slice(0,6).map((s,i)=>'  '+(i+1)+'. '+s.text+' ('+s.count+' mentions)').join('\n');
+    const m={};data.forEach(f=>f.tags.forEach(t=>{m[t]=(m[t]||0)+1;}));
+    const tags=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([t,c])=>'  '+t+': '+c).join('\n');
+    const comments=data.filter(f=>f.improve).slice(0,5).map((f,i)=>'  ['+(i+1)+'] "'+f.improve+'" — '+f.name+', '+f.event).join('\n');
+    const recommend=data.filter(f=>f.recommend==='Definitely'||f.recommend==='Probably').length;
+    let r='ECHOBOARD FEEDBACK REPORT\n'+'='.repeat(40)+'\n\n';
+    r+=`Event:     ${ev||'All Events'}\nPeriod:    ${from||'-'} to ${to||'-'}\nGenerated: ${new Date().toLocaleString()}\nResponses: ${data.length}\n\n`;
+    if(sections.includes('summary'))r+=`EXECUTIVE SUMMARY\n${'-'.repeat(30)}\n  Total Responses : ${data.length}\n  Avg Rating      : ${avg}/5.00\n  Positive (4-5★) : ${data.filter(f=>f.rating>=4).length} (${(data.filter(f=>f.rating>=4).length/data.length*100).toFixed(0)}%)\n  Neutral  (3★)   : ${data.filter(f=>f.rating===3).length}\n  Negative (1-2★) : ${data.filter(f=>f.rating<=2).length}\n  Would Recommend : ${recommend} (${(recommend/data.length*100).toFixed(0)}%)\n\n`;
+    if(sections.includes('ratings'))r+=`RATING BREAKDOWN\n${'-'.repeat(30)}\n${dist}\n\n`;
+    if(sections.includes('suggestions'))r+=`TOP SUGGESTIONS\n${'-'.repeat(30)}\n${sugg||'  None detected.'}\n\n`;
+    if(sections.includes('tags'))r+=`TAG ANALYSIS\n${'-'.repeat(30)}\n${tags||'  No tags.'}\n\n`;
+    if(sections.includes('comments'))r+=`SAMPLE IMPROVEMENT COMMENTS\n${'-'.repeat(30)}\n${comments||'  None.'}\n\n`;
+    r+='='.repeat(40)+'\nEnd of Report — EchoBoard Academic Feedback Platform';
+    document.getElementById('report-output').textContent=r;
+    showToast('Report generated! ✦','amber');
+  } catch(err){showToast(err.message,'red');}
+}
+
+function copyReport(){
+  const text=document.getElementById('report-output').textContent;
+  if(text.startsWith('Select'))return;
+  navigator.clipboard.writeText(text).then(()=>showToast('Copied!','teal'));
+}
+
+function showToast(msg,type='teal'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='amber'?'var(--amber-dark)':type==='red'?'var(--red)':'var(--teal)';
+  t.style.color=type==='amber'?'var(--ink)':'#fff';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showToastPublic(msg,type){showToast(msg,type);}
+
+if(getToken()&&getUser())bootApp();
+</script>
+</body>
+</html>
